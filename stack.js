@@ -1,7 +1,10 @@
+// TODO: Rewrite, remove async and underscore libraries with native js
 var async = require('async'), 
     _ = require('underscore'), 
     routeParser = require('route-parser')
 
+// TODO: Rewrite, instead of using an object literal expression, we should use a function declaration
+// with prototypical properties that help separate the logic.
 var stack = { 
   routes : [], 
   state : {}, 
@@ -9,11 +12,17 @@ var stack = {
   next_queue : []
 }
 
+// TODO: Rewrite, there is too much going on in here, this should contain the basic instructions 
+// for .on, then call composable methods such as setting the middleware, determining the route, etc.
+
 stack.on = function(param1, callback) {
   //param1: a string or an array of strings.
   //(is either a single path or array of paths)  
 
   var that = this
+  // TODO: Rewrite, This function should probably be outside and not rely soley of the closure stack.on creates.
+  // Additionally, I don't see the benefit for making this a function expression, where a function declaration would 
+  // probably be more optimal, especially since functions are hoisted.
   var registerRoute = function(path, listenerCallback) {
 
     var route = new routeParser(path)
@@ -56,6 +65,8 @@ stack.on = function(param1, callback) {
   })
 }
 
+
+// TODO: Rewrite, Instead of using path, param2, param3 - we can use arguments length and always consider the last argument to be the callback.
 stack.fire = function(path, param2, param3) {
 
   var state, callback
@@ -85,6 +96,9 @@ stack.fire = function(path, param2, param3) {
   if(state._command) stack.command_queue.push(state._command)
 
   var matchingRoute, command
+  // TODO: Rewrite, This can be achieved differently, not sure the optimal way yet, but the current way feels
+  // wrong.  matching the route should not have to conditionally assign variables above scope, nor should
+  // it have as much logic.  
   matchingRoute = _.find(this.routes, function(route) {
     var result = route.route.match(path)
     if(result) {
@@ -100,8 +114,11 @@ stack.fire = function(path, param2, param3) {
   var that = this
 
   //Apply command as a property of state. 
+  // TODO: Rewrite, modifying the object here seems wrong, the item needed should already be set differently.
   state._command = command
 
+  // TODO: Rewrite, Replacing this with our own async methods should be easier than using the async library.
+  // This could be achieved by using setImmediate, or perhaps Promises.  
   async.waterfall([
     function(seriesCallback) {
       var seedFunction = function(next) { next(null, state) }
@@ -130,6 +147,7 @@ stack.fire = function(path, param2, param3) {
         seriesCallback(null, state)
       }
     },
+      // TODO: Rewrite, the result of this should not have to be another function
     function(state) {
       //Apply any previous state that was saved from before:
       if(that.command_queue.length > 0) state._command = that.command_queue.pop()
